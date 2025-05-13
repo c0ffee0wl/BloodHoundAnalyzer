@@ -164,7 +164,7 @@ for m in ${modules//,/ }; do
         start_bool=true
         ;;
     run)
-        start_bool=true
+        start_bool=false
         run_bool=true
         ;;
     import)
@@ -181,7 +181,7 @@ for m in ${modules//,/ }; do
             exit 1
         fi
         import_bool=true
-        start_bool=true
+        start_bool=false
         ;;
     analyze)
         if [ -z "${domain}" ]; then
@@ -193,7 +193,7 @@ for m in ${modules//,/ }; do
             exit 1
         fi
         analyze_bool=true
-        start_bool=true
+        start_bool=false
         ;;
     stop)
         if [ -z "${domain}" ] && [ "${bhdce_bool}" == true ]; then
@@ -331,7 +331,7 @@ if [ "${analyze_bool}" == true ]; then
     echo -e ""
 
     echo -e "${GREEN}[BloodHoundAnalyzer ANALYZE]${NC} Running BloodHoundQuickWin"
-    ${python3} "${tools_dir}/bhqc.py" -u "${neo4j_user}" -p "${neo4j_pass}" -d "${domain}" --heavy -b bolt://127.0.0.1:"${bolt_port}" | tee "${output_dir}/bhqc_${domain}.txt"
+    ${python3} "${tools_dir}/bhqc.py" -u "${neo4j_user}" -p "${neo4j_pass}" --heavy -b bolt://127.0.0.1:"${bolt_port}" | tee "${output_dir}/bhqc_${domain}.txt"
     echo -e ""
 
     echo -e "${GREEN}[BloodHoundAnalyzer ANALYZE]${NC} Running Ransomulator"
