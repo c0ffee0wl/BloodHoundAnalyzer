@@ -355,10 +355,10 @@ if [ "${stop_bool}" == true ]; then
         sudo neo4j stop 2>&1
     else
         echo -e "${GREEN}[BloodHoundAnalyzer STOP]${NC} Stopping Docker containers"
-        container_name="${domain/\./}"
-        sudo docker container stop "${container_name}"_graph-db_1 2>/dev/null
-        sudo docker container stop "${container_name}"_app-db_1 2>/dev/null
-        sudo docker container stop "${container_name}"_bloodhound_1 2>/dev/null
+        container_name="${domain//\./}"
+        sudo docker container stop "${container_name}"-graph-db-1
+        sudo docker container stop "${container_name}"-app-db-1
+        sudo docker container stop "${container_name}"-bloodhound-1
     fi
     echo -e ""
 fi
