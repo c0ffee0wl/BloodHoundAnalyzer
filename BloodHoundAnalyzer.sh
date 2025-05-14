@@ -332,6 +332,7 @@ if [ "${analyze_bool}" == true ]; then
 
     echo -e "${GREEN}[BloodHoundAnalyzer ANALYZE]${NC} Running BloodHoundQuickWin"
     ${python3} "${tools_dir}/bhqc.py" -u "${neo4j_user}" -p "${neo4j_pass}" --heavy -b bolt://127.0.0.1:"${bolt_port}" | tee "${output_dir}/bhqc_${domain}.txt"
+    sed 's/\x1b\[[0-9;]*m//g' -i "${output_dir}/bhqc_${domain}.txt"
     echo -e ""
 
     echo -e "${GREEN}[BloodHoundAnalyzer ANALYZE]${NC} Running Ransomulator"
