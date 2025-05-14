@@ -40,7 +40,7 @@ print_banner() {
       / \/  \ | (_) | (_) | (_| / __  / (_) | |_| | | | | (_| /  _  \ | | | (_| | | |_| |/ /  __/ |   
       \_____/_|\___/ \___/ \__,_\/ /_/ \___/ \__,_|_| |_|\__,_\_/ \_/_| |_|\__,_|_|\__, /___\___|_|   
                                                                                    |___/              
-      ${BLUE}BloodHoundAnalyzer: ${CYAN}version 0.4 ${NC}
+      ${BLUE}BloodHoundAnalyzer: ${CYAN}version 0.5 ${NC}
       https://github.com/lefayjey/BloodHoundAnalyzer
       ${BLUE}Author: ${CYAN}lefayjey${NC}
 "
@@ -64,7 +64,7 @@ print_help() {
     echo -e "                                 ${YELLOW}start${NC}: Start BloodHoundCE containers or neo4j."
     echo -e "                                 ${YELLOW}run${NC}: Run BloodHound GUI or Firefox with BloodHoundCE webpage."
     echo -e "                                 ${YELLOW}import${NC}: Import BloodHound data into the neo4j database."
-    echo -e "                                 ${YELLOW}analyze${NC}: Run analysis tools (AD-miner, GoodHound, Ransomulator, PlumHound) on the imported data."
+    echo -e "                                 ${YELLOW}analyze${NC}: Run analysis tools (AD-miner, GoodHound, Ransomulator, PlumHound, ad-recon) on the imported data."
     echo -e "                                 ${YELLOW}stop${NC}: Stop BloodHoundCE containers or neo4j."
     echo -e "                                 ${YELLOW}clean${NC}: Stop and delete BloodHoundCE containers (only for BloodHoundCE)."
     echo -e "--old                       Use the old version of BloodHound."
@@ -268,7 +268,7 @@ if [ "${run_bool}" == true ]; then
     else
         sleep 3
         echo -e "${GREEN}[BloodHoundAnalyzer RUN]${NC} Running Firefox"
-        firefox-esr http://127.0.0.1:"${web_port}" >/dev/null 2>&1 &
+        firefox http://127.0.0.1:"${web_port}" >/dev/null 2>&1 &
     fi
     echo -e ""
 fi
@@ -344,6 +344,14 @@ if [ "${analyze_bool}" == true ]; then
     ${python3} PlumHound.py -x tasks/default.tasks -s "bolt://127.0.0.1:${bolt_port}" -u "${neo4j_user}" -p "${neo4j_pass}" -v 0 --op "${output_dir}/PlumHound_${domain}"
     ${python3} PlumHound.py -bp short 5 -s "bolt://127.0.0.1:${bolt_port}" -u "${neo4j_user}" -p "${neo4j_pass}" --op "${output_dir}/PlumHound_${domain}"
     ${python3} PlumHound.py -bp all 5 -s "bolt://127.0.0.1:${bolt_port}" -u "${neo4j_user}" -p "${neo4j_pass}" --op "${output_dir}/PlumHound_${domain}"
+    echo -e ""
+    
+    echo -e "${GREEN}[BloodHoundAnalyzer ANALYZE]${NC} Running ad-recon"
+    mkdir -p "${output_dir}/ad-recon_${domain}"
+    cd "${tools_dir}"/ad-recon/ || exit
+    ${python3} ad_recon.py --pathing --transitive -U "bolt://127.0.0.1:${bolt_port}" -u "${neo4j_user}" -p "${neo4j_pass}" -O "${output_dir}/ad-recon_${domain}"
+    echo -e ""
+    cat "${output_dir}/ad-recon_${domain}/users_outbound_trans_rights.txt" | sort -nr -k7,7 | head -n 10 | tee "${output_dir}/ad-recon_${domain}/1_most_outbound_trans_rights.txt" 2>/dev/null
     echo -e ""
 
     cd "${current_dir}" || exit

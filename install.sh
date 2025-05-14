@@ -7,7 +7,7 @@ sudo apt install -y docker-ce
 
 python3 -m venv "${tools_dir}/.venv"
 source "${tools_dir}/.venv/bin/activate"
-pip3 install py2neo pandas prettytable neo4j tabulate argcomplete alive-progress "numpy<1.29.0" colorama requests termcolor --upgrade
+pip3 install py2neo pandas prettytable neo4j tabulate argcomplete alive-progress "numpy<1.29.0" colorama requests termcolor toml --upgrade
 deactivate
 pipx install git+https://github.com/dirkjanm/bloodhound.py --force
 pipx install "git+https://github.com/dirkjanm/BloodHound.py@bloodhound-ce" --force --suffix '_ce'
