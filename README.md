@@ -10,7 +10,7 @@ BloodHoundAnalyzer is a bash script designed to automate the collection, deploym
 Before using BloodHoundAnalyzer, ensure you have the following tools installed:
 
 - python3
-- docker and docker-compose (for BloodHoundCE version)
+- docker-ce (for BloodHoundCE version), see [Docker CE Documentation](https://docs.docker.com/engine/install/)
 - neo4j (for old BloodHound version)
 
 Run the `install.sh` script to install the following tools:
@@ -21,6 +21,7 @@ Run the `install.sh` script to install the following tools:
   - **Ransomulator**: Runs the ransomulator script.
   - **BloodHound QuickWin**: Runs the BloodHoundQuickWin script.
   - **PlumHound**: Runs PlumHound tasks and short path analyses.
+  - **ad-recon**: Runs ad-recon pathing and transitive queries.
 
 ```bash
 chmod +x ./install.sh
@@ -111,18 +112,18 @@ chmod +x ./BloodHoundAnalyzer.sh
 ./BloodHoundAnalyzer.sh -M run --old
 ```
 
-### Start BloodHound, Import Data, and Run Analysis
+### Import Data, and Run Analysis
 
 ```bash
 ./BloodHoundAnalyzer.sh -M import,analyze -d example.com --data /path/to/bloodhound/data.zip -o /path/to/output
-./BloodHoundAnalyzer.sh -M import,analyze --data /path/to/bloodhound/data.zip --old -o /path/to/output
+./BloodHoundAnalyzer.sh -M import,analyze --data /path/to/bloodhound/data.zip --old --oldpass bloodhound -o /path/to/output
 ```
 
-### Start BloodHound, and Run Analysis on previously imported data
+### Run Analysis on previously imported data
 
 ```bash
 ./BloodHoundAnalyzer.sh -M analyze -d example.com -o /path/to/output
-./BloodHoundAnalyzer.sh -M analyze --old -o /path/to/output
+./BloodHoundAnalyzer.sh -M analyze --old --oldpass bloodhound -o /path/to/output
 ```
 
 ### Stop BloodHoundCE containers or old BloodHound's Neo4j 
@@ -151,3 +152,4 @@ BloodHoundAnalyzer uses the following tools:
 - https://github.com/idnahacks/GoodHound
 - https://github.com/zeronetworks/BloodHound-Tools/blob/main/Ransomulator
 - https://github.com/kaluche/bloodhound-quickwin
+- https://github.com/tid35/ad-recon
