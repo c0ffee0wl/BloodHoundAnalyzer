@@ -24,16 +24,46 @@ Run the `install.sh` script to install the following tools:
   - **ad-recon**: Runs ad-recon pathing and transitive queries.
 
 ```bash
-chmod +x ./install.sh
-./install.sh
+sudo git clone --depth=1 https://github.com/c0ffee0wl/BloodHoundAnalyzer /opt/BloodHoundAnalyzer
+sudo chown -R "$(whoami)":"$(whoami)" /opt/BloodHoundAnalyzer
+cd /opt/BloodHoundAnalyzer && ./install.sh
 ```
+
+
 ## Usage
 
 Run the script with one or more of the modules as detailed below. Make sure to have the necessary permissions to execute Docker or run Neo4j.
 
 ```bash
-chmod +x ./BloodHoundAnalyzer.sh
 ./BloodHoundAnalyzer.sh [OPTIONS]
+```
+
+## Quick Start for BloodHound CE
+
+```bash
+DOMAIN=domain.local
+
+# Initialize environment and start containers
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M start -d $DOMAIN
+
+# To view progress
+tail -f /opt/BA_tools/bloodhound-automation/projects/$DOMAIN/logs.txt
+
+# To upload AzureHound data, you have to zip the json
+zip azurehound.zip azurehound.json
+
+# Import
+for file in *.zip; do /opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M import -d $DOMAIN --data "$file"; done
+
+# Analyze
+mkdir analyzer_output
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M analyze -d $DOMAIN -o $PWD/analyzer_output
+
+# Stop containers
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M stop -d $DOMAIN
+
+# Finally, to delete
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M clean -d $DOMAIN
 ```
 
 ### Options
