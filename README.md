@@ -24,6 +24,16 @@ Run the `install.sh` script to install the following tools:
   - **ad-recon**: Runs ad-recon pathing and transitive queries.
 
 ```bash
+# Install Docker CE on Kali Linux
+for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
+ echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" | sudo tee /etc/apt/sources.list.d/docker.list 
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable docker --now
+sudo docker ps
+
+# Install BloodHoundAnalyzer
 sudo git clone --depth=1 https://github.com/c0ffee0wl/BloodHoundAnalyzer /opt/BloodHoundAnalyzer
 sudo chown -R "$(whoami)":"$(whoami)" /opt/BloodHoundAnalyzer
 cd /opt/BloodHoundAnalyzer && ./install.sh
@@ -32,7 +42,8 @@ cd /opt/BloodHoundAnalyzer && ./install.sh
 
 ## Usage
 
-Run the script with one or more of the modules as detailed below. Make sure to have the necessary permissions to execute Docker or run Neo4j.
+Run the script with one or more of the modules as detailed below. M
+ake sure to have the necessary permissions to execute Docker or run Neo4j.
 
 ```bash
 ./BloodHoundAnalyzer.sh [OPTIONS]
