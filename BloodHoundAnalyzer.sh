@@ -148,12 +148,6 @@ check_docker() {
         return 1
     fi
     
-    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
-        echo -e "${RED}[ERROR]${NC} Docker Compose is not available"
-        echo -e "${YELLOW}[INFO]${NC} Docker Compose is included in Docker Desktop"
-        return 1
-    fi
-    
     return 0
 }
 
@@ -514,10 +508,10 @@ done
 
 print_banner
 
-# Check if bloodhound-cli exists
-if [ ! -f "$bloodhound_cli" ]; then
-    echo -e "${RED}[ERROR]${NC} bloodhound-cli not found at ${bloodhound_cli}"
-    echo -e "${YELLOW}[INFO]${NC} Please install it from: https://github.com/SpecterOps/BloodHound"
+# Check if bloodhound-cli exists and is executable
+if [ ! -x "$bloodhound_cli" ]; then
+    echo -e "${RED}[ERROR]${NC} bloodhound-cli not found or not executable at ${bloodhound_cli}"
+    echo -e "${YELLOW}[INFO]${NC} Please run ./install.sh or install from: https://github.com/SpecterOps/BloodHound"
     exit 1
 fi
 
@@ -744,6 +738,13 @@ fi
 # Run analysis tools
 if [ "${analyze_bool}" == true ]; then
 
+    # Validate Python venv exists
+    if [ ! -x "${python3}" ]; then
+        echo -e "${RED}[ERROR]${NC} Python virtual environment not found at ${python3}"
+        echo -e "${YELLOW}[INFO]${NC} Please run ./install.sh to set up the environment"
+        exit 1
+    fi
+
     mkdir -p "${proj_out_dir}"
     cd "${proj_out_dir}" || exit
     
@@ -777,9 +778,42 @@ if [ "${analyze_bool}" == true ]; then
     # Ransomulator
     echo -e "${GREEN}[ANALYZE]${NC} Running Ransomulator"
     echo -e "${CYAN}[CMD]${NC} ${python3} ${tools_dir}/ransomulator.py -l bolt://127.0.0.1:${bolt_port} -u neo4j -p ${neo4j_password} -w 12 -o ${proj_out_dir}/ransomulator_${domain}.txt"
-    ${python3} "${tools_dir}/ransomulator.py" -l bolt://127.0.0.1:"${bolt_port}" -u neo4j -p "${neo4j_password}" -w 12 -o"${proj_out_dir}/ransomulator_${domain}.txt"
+    ${python3} "${tools_dir}/ransomulator.py" -l bolt://127.0.0.1:"${bolt_port}" -u neo4j -p "${neo4j_password}" -w 12 -o "${proj_out_dir}/ransomulator_${domain}.txt"
     echo -e ""
-    
+
+    # PlumHound
+    if [ ! -d "${tools_dir}/PlumHound-master" ]; then
+        echo -e "${YELLOW}[ANALYZE]${NC} PlumHound directory not found, skipping PlumHound analysis"
+        echo -e "${YELLOW}[INFO]${NC} Run ./install.sh to install PlumHound"
+    else
+        echo -e "${GREEN}[ANALYZE]${NC} Running PlumHound"
+        mkdir -p "${proj_out_dir}/PlumHound_${domain}"
+        cd "${tools_dir}"/PlumHound-master/ || exit
+        echo -e "${CYAN}[CMD]${NC} PlumHound default tasks"
+        ${python3} PlumHound.py -x tasks/default.tasks -s "bolt://127.0.0.1:${bolt_port}" -u neo4j -p "${neo4j_password}" -v 0 --op "${proj_out_dir}/PlumHound_${domain}"
+        echo -e "${CYAN}[CMD]${NC} PlumHound short path analysis (5 hops)"
+        ${python3} PlumHound.py -bp short 5 -s "bolt://127.0.0.1:${bolt_port}" -u neo4j -p "${neo4j_password}" --op "${proj_out_dir}/PlumHound_${domain}"
+        echo -e "${CYAN}[CMD]${NC} PlumHound all path analysis (5 hops)"
+        ${python3} PlumHound.py -bp all 5 -s "bolt://127.0.0.1:${bolt_port}" -u neo4j -p "${neo4j_password}" --op "${proj_out_dir}/PlumHound_${domain}"
+        cd "${proj_out_dir}" || exit
+    fi
+    echo -e ""
+
+    # ad-recon
+    if [ ! -d "${tools_dir}/ad-recon" ]; then
+        echo -e "${YELLOW}[ANALYZE]${NC} ad-recon directory not found, skipping ad-recon analysis"
+        echo -e "${YELLOW}[INFO]${NC} Run ./install.sh to install ad-recon"
+    else
+        echo -e "${GREEN}[ANALYZE]${NC} Running ad-recon"
+        mkdir -p "${proj_out_dir}/ad-recon_${domain}"
+        cd "${tools_dir}"/ad-recon/ || exit
+        echo -e "${CYAN}[CMD]${NC} ad-recon pathing and transitive queries"
+        ${python3} ad_recon.py --pathing --transitive -U "bolt://127.0.0.1:${bolt_port}" -u neo4j -p "${neo4j_password}" -O "${proj_out_dir}/ad-recon_${domain}"
+        echo -e ""
+        cat "${proj_out_dir}/ad-recon_${domain}/users_outbound_trans_rights.txt" | sort -nr -k7,7 | head -n 10 | tee "${proj_out_dir}/ad-recon_${domain}/1_most_outbound_trans_rights.txt" 2>/dev/null
+        echo -e ""
+    fi
+
     cd "${current_dir}" || exit
 fi
 

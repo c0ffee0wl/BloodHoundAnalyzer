@@ -7,12 +7,13 @@ BloodHoundAnalyzer is a bash script designed to automate the deployment, data im
 
 ## Features
 
+- **Data Collection**: Includes bloodhound-python and bloodhound-ce-python for AD data collection
 - **Multi-Domain Support**: Deploy separate BloodHound CE instances for different domains
 - **Automated Container Management**: Start, stop, and clean BloodHound CE containers with custom naming
 - **Custom Port Configuration**: Configure custom ports for Neo4j and BloodHound web interface
 - **Automatic Password Management**: Automatically reset admin password to a standard password
 - **Multiple Data Import Formats**: Import .zip files, .json files, or folders containing JSON files
-- **Integrated Analysis Tools**: Run AD-miner, GoodHound, Ransomulator, and BloodHound QuickWin
+- **Integrated Analysis Tools**: Run AD-miner, GoodHound, Ransomulator, PlumHound, ad-recon, and BloodHound QuickWin
 - **Project Listing**: View all deployed BloodHound projects and their status
 
 ## Prerequisites
@@ -20,20 +21,24 @@ BloodHoundAnalyzer is a bash script designed to automate the deployment, data im
 Before using BloodHoundAnalyzer, ensure you have the following installed:
 
 - **Python 3** with venv support
-- **Docker Desktop** (includes Docker Compose)
 - **Linux environment** (tested on Ubuntu/Debian) or WSL2 on Windows
 
 Run the `install.sh` script to install the required tools:
+  - **bloodhound-python**: Python-based AD data collector for legacy BloodHound
+  - **bloodhound-ce-python**: Python-based AD data collector for BloodHound CE
   - **bloodhound-cli**: BloodHound CE command-line interface
   - **AD-miner**: Generates comprehensive AD security reports
   - **GoodHound**: Identifies high-value attack paths
   - **Ransomulator**: Simulates ransomware attack paths
   - **BloodHound QuickWin**: Quick analysis script
   - **PlumHound**: Task-based analysis tool
+  - **ad-recon**: AD pathing and transitive rights analysis
 
 ```bash
-chmod +x ./install.sh
-./install.sh
+# Install BloodHoundAnalyzer
+sudo git clone --depth=1 https://github.com/c0ffee0wl/BloodHoundAnalyzer /opt/BloodHoundAnalyzer
+sudo chown -R "$(whoami)":"$(whoami)" /opt/BloodHoundAnalyzer
+cd /opt/BloodHoundAnalyzer && ./install.sh
 ```
 
 ## Usage
@@ -44,6 +49,72 @@ Run the script with one or more modules as detailed below:
 chmod +x ./BloodHoundAnalyzer.sh
 ./BloodHoundAnalyzer.sh [OPTIONS]
 ```
+
+## Quick Start for BloodHound CE
+
+```bash
+DOMAIN=domain.local
+
+# Initialize environment and start containers
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M start -d $DOMAIN
+
+# To upload AzureHound data, you have to zip the json
+zip azurehound.zip azurehound.json
+
+# Import (batch import example)
+for file in *.zip; do /opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M import -d $DOMAIN -D "$file"; done
+
+# Analyze
+mkdir analyzer_output
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M analyze -d $DOMAIN -o $PWD/analyzer_output
+
+# Stop containers
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M stop -d $DOMAIN
+
+# Finally, to delete
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M clean -d $DOMAIN
+```
+
+## Data Collection with BloodHound.py
+
+BloodHoundAnalyzer installs both `bloodhound-python` (legacy) and `bloodhound-ce-python` (Community Edition) for collecting Active Directory data.
+
+### Basic Collection
+
+```bash
+# For BloodHound CE (recommended)
+bloodhound-ce-python -u username -p password -d domain.local -ns 10.0.0.1 -c All --zip
+
+# For legacy BloodHound
+bloodhound-python -u username -p password -d domain.local -ns 10.0.0.1 -c All --zip
+```
+
+### Authentication Methods
+
+```bash
+# Password authentication
+bloodhound-ce-python -u user -p 'Password123' -d domain.local -ns 10.0.0.1 -c All --zip
+
+# NT Hash authentication
+bloodhound-ce-python -u user --hashes :nt_hash -d domain.local -ns 10.0.0.1 -c All --zip
+
+# Kerberos authentication (with ticket)
+export KRB5CCNAME=/path/to/ticket.ccache
+bloodhound-ce-python -u user -k -d domain.local -ns 10.0.0.1 -c All --zip
+
+# AES Key authentication
+bloodhound-ce-python -u user --aesKey aes_key -d domain.local -ns 10.0.0.1 -c All --zip
+```
+
+### Collection Methods
+
+- `DCOnly` - Only data from the Domain Controller (no network connections)
+- `Session` - Session data (currently logged in users)
+- `LocalAdmin` - Local administrator information
+- `Group` - Group membership information
+- `ACL` - Access Control Lists
+- `Trusts` - Domain trust relationships
+- `All` - All collection methods (recommended)
 
 ### Options
 
@@ -129,6 +200,8 @@ This will generate:
 - GoodHound analysis in `GoodHound_contoso.local/`
 - BloodHound QuickWin output in `bhqc_contoso.local.txt`
 - Ransomulator results in `ransomulator_contoso.local.txt`
+- PlumHound reports in `PlumHound_contoso.local/`
+- ad-recon analysis in `ad-recon_contoso.local/`
 
 ### Complete Workflow (Import + Analyze)
 
@@ -187,6 +260,8 @@ Deploy and manage multiple domains simultaneously:
 ├── contoso.local/
 │   ├── ADMinerReport_contoso.local/
 │   ├── GoodHound_contoso.local/
+│   ├── PlumHound_contoso.local/
+│   ├── ad-recon_contoso.local/
 │   ├── bhqc_contoso.local.txt
 │   └── ransomulator_contoso.local.txt
 └── corp.local/
@@ -240,11 +315,13 @@ This project is licensed under the terms of the MIT license.
 
 BloodHoundAnalyzer uses the following tools:
 - [BloodHound CE](https://github.com/SpecterOps/BloodHound) - Active Directory security tool
+- [BloodHound.py](https://github.com/dirkjanm/BloodHound.py) - Python-based AD data ingestor
 - [AD_Miner](https://github.com/Mazars-Tech/AD_Miner) - AD security analysis and reporting
 - [GoodHound](https://github.com/idnahacks/GoodHound) - Attack path analysis
 - [Ransomulator](https://github.com/zeronetworks/BloodHound-Tools/tree/main/Ransomulator) - Ransomware simulation
 - [BloodHound QuickWin](https://github.com/kaluche/bloodhound-quickwin) - Quick analysis script
 - [PlumHound](https://github.com/PlumHound/PlumHound) - Task-based reporting
+- [ad-recon](https://github.com/tid35/ad-recon) - AD pathing and transitive rights analysis
 
 ## Author
 
