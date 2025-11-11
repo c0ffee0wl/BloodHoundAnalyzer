@@ -58,8 +58,13 @@ DOMAIN=domain.local
 # Initialize environment and start containers
 /opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M start -d $DOMAIN
 
-# To upload AzureHound data, you have to zip the json
+# To upload AzureHound data, you can use the JSON directly or optionally zip it
+# Option 1: Use JSON file directly
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M import -d $DOMAIN -D azurehound.json
+
+# Option 2: Zip the JSON (optional, for convenience when handling multiple files)
 zip azurehound.zip azurehound.json
+/opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M import -d $DOMAIN -D azurehound.zip
 
 # Import (batch import example)
 for file in *.zip; do /opt/BloodHoundAnalyzer/BloodHoundAnalyzer.sh -M import -d $DOMAIN -D "$file"; done
@@ -128,7 +133,7 @@ bloodhound-ce-python -u user --aesKey aes_key -d domain.local -ns 10.0.0.1 -c Al
 
 - `-D, --data DATA_PATH`  
   Specify the path to BloodHound data:
-  - `.zip` file (SharpHound/AzureHound collection)
+  - `.zip` file (SharpHound/AzureHound collection - zipping is optional for convenience)
   - `.json` file (single collection file)
   - Folder containing `.json` files
 
