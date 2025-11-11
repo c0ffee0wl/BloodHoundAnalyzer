@@ -771,8 +771,8 @@ if [ "${analyze_bool}" == true ]; then
     echo -e "${GREEN}[ANALYZE]${NC} Running BloodHoundQuickWin"
     echo ""
     echo "[*] Running BloodHound QuickWin..."
-    echo -e "${CYAN}[CMD]${NC} ${python3} ${tools_dir}/bhqc.py -u neo4j -p ${neo4j_password} -d ${domain} --heavy -b bolt://127.0.0.1:${bolt_port}"
-    ${python3} "${tools_dir}/bhqc.py" -u neo4j -p "${neo4j_password}" -d "${domain}" --heavy -b bolt://127.0.0.1:"${bolt_port}" | tee "${proj_out_dir}/bhqc_${domain}.txt"
+    echo -e "${CYAN}[CMD]${NC} ${python3} ${tools_dir}/bhqc.py -u neo4j -p ${neo4j_password} --heavy -b bolt://127.0.0.1:${bolt_port}"
+    ${python3} "${tools_dir}/bhqc.py" -u neo4j -p "${neo4j_password}" --heavy -b bolt://127.0.0.1:"${bolt_port}" | tee "${proj_out_dir}/bhqc_${domain}.txt"
     echo -e ""
     
     # Ransomulator
