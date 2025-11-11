@@ -777,8 +777,8 @@ if [ "${analyze_bool}" == true ]; then
     
     # Ransomulator
     echo -e "${GREEN}[ANALYZE]${NC} Running Ransomulator"
-    echo -e "${CYAN}[CMD]${NC} ${python3} ${tools_dir}/ransomulator.py -l bolt://127.0.0.1:${bolt_port} -u neo4j -p ${neo4j_password} -w 12 -o ${proj_out_dir}/ransomulator_${domain}.txt"
-    ${python3} "${tools_dir}/ransomulator.py" -l bolt://127.0.0.1:"${bolt_port}" -u neo4j -p "${neo4j_password}" -w 12 -o "${proj_out_dir}/ransomulator_${domain}.txt"
+    echo -e "${CYAN}[CMD]${NC} ${python3} ${tools_dir}/ransomulator.py -l bolt://127.0.0.1:${bolt_port} -u neo4j -p ${neo4j_password} -w 12 > ${proj_out_dir}/ransomulator_${domain}.csv"
+    ${python3} "${tools_dir}/ransomulator.py" -l bolt://127.0.0.1:"${bolt_port}" -u neo4j -p "${neo4j_password}" -w 12 > "${proj_out_dir}/ransomulator_${domain}.csv" 2>&1
     echo -e ""
 
     # PlumHound
