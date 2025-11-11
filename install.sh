@@ -80,7 +80,7 @@ echo "Installing GoodHound..."
 uv tool install git+https://github.com/idnahacks/GoodHound --force
 
 echo "Cloning ad-recon..."
-git clone https://github.com/tid35/ad-recon "${tools_dir}"/ad-recon
+git clone https://github.com/c0ffee0wl/ad-recon "${tools_dir}"/ad-recon
 if [ $? -ne 0 ]; then
     echo "WARNING: Failed to clone ad-recon (analysis will skip ad-recon)"
 fi

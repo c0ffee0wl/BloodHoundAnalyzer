@@ -808,7 +808,7 @@ if [ "${analyze_bool}" == true ]; then
         mkdir -p "${proj_out_dir}/ad-recon_${domain}"
         cd "${tools_dir}"/ad-recon/ || exit
         echo -e "${CYAN}[CMD]${NC} ad-recon pathing and transitive queries"
-        ${python3} ad_recon.py --pathing --transitive -U "bolt://127.0.0.1:${bolt_port}" -u neo4j -p "${neo4j_password}" -O "${proj_out_dir}/ad-recon_${domain}"
+        ${python3} ad_recon.py --pathing --transitive -U "bolt://127.0.0.1:${bolt_port}" -u neo4j -p "${neo4j_password}" -d neo4j -O "${proj_out_dir}/ad-recon_${domain}"
         echo -e ""
         cat "${proj_out_dir}/ad-recon_${domain}/users_outbound_trans_rights.txt" | sort -nr -k7,7 | head -n 10 | tee "${proj_out_dir}/ad-recon_${domain}/1_most_outbound_trans_rights.txt" 2>/dev/null
         echo -e ""
