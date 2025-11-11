@@ -91,7 +91,7 @@ while test $# -gt 0; do
             shift
             ;;
         -o | --output)
-            output_dir="$(realpath "${2}")"
+            output_dir="$(realpath -m "${2}")"
             shift
             ;;
         -M | --modules)
