@@ -6,30 +6,97 @@ sudo chown -R "$(whoami)":"$(whoami)" "${tools_dir}"
 
 sudo apt-get update
 
-# Install docker-ce
-if ! dpkg -l docker-ce &> /dev/null; then
+# Install Docker CE
+echo "Installing Docker CE..."
+if ! command -v docker &> /dev/null; then
+    # Remove conflicting packages
+    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove -y "$pkg" || true; done
 
-    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove -y $pkg || true; done
+    # Detect distribution and codename
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        DISTRO_ID="$ID"
+
+        # For Ubuntu derivatives (Mint, Pop!_OS, etc.), use UBUNTU_CODENAME if available
+        if [ "$ID" = "ubuntu" ] || [ "$ID_LIKE" = "ubuntu" ] || echo "$ID_LIKE" | grep -q "ubuntu"; then
+            DOCKER_DISTRO="ubuntu"
+            DOCKER_CODENAME="${UBUNTU_CODENAME:-$VERSION_CODENAME}"
+
+            # Validate against supported Ubuntu versions
+            case "$DOCKER_CODENAME" in
+                oracular|plucky|noble|jammy)
+                    # Officially supported Ubuntu versions (25.10, 25.04, 24.04 LTS, 22.04 LTS)
+                    ;;
+                *)
+                    echo "Warning: Ubuntu codename '$DOCKER_CODENAME' is not officially supported by Docker. Falling back to Bookworm."
+                    DOCKER_DISTRO="debian"
+                    DOCKER_CODENAME="bookworm"
+                    ;;
+            esac
+        elif [ "$ID" = "debian" ] || [ "$ID" = "kali" ] || echo "$ID_LIKE" | grep -q "debian"; then
+            DOCKER_DISTRO="debian"
+            DOCKER_CODENAME="$VERSION_CODENAME"
+
+            # Validate against supported Debian versions
+            case "$DOCKER_CODENAME" in
+                trixie|bookworm|bullseye)
+                    # Officially supported Debian versions (13, 12, 11)
+                    ;;
+                kali-rolling)
+                    # Kali uses Debian repos, default to bookworm
+                    DOCKER_CODENAME="bookworm"
+                    ;;
+                *)
+                    echo "Warning: Debian codename '$DOCKER_CODENAME' is not officially supported by Docker. Falling back to Bookworm."
+                    DOCKER_CODENAME="bookworm"
+                    ;;
+            esac
+        else
+            echo "Warning: Unknown distribution '$ID'. Falling back to Debian Bookworm."
+            DOCKER_DISTRO="debian"
+            DOCKER_CODENAME="bookworm"
+        fi
+    else
+        echo "Warning: Cannot detect distribution. Falling back to Debian Bookworm."
+        DOCKER_DISTRO="debian"
+        DOCKER_CODENAME="bookworm"
+    fi
+
+    echo "Using Docker repository: $DOCKER_DISTRO/$DOCKER_CODENAME"
 
     # Add Docker's official GPG key
     sudo install -m 0755 -d /etc/apt/keyrings
-    sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+    sudo curl -fsSL https://download.docker.com/linux/$DOCKER_DISTRO/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
 
     # Add the repository to Apt sources
-    DOCKER_CODENAME="bookworm"
     echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $DOCKER_CODENAME stable" | \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$DOCKER_DISTRO $DOCKER_CODENAME stable" | \
       sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
+    # Install Docker CE and components
     sudo apt-get update
-    sudo apt-get install -y docker-ce
-    sudo systemctl enable docker --now
-    echo "Adding current user to docker group..."
-    sudo usermod -aG docker $USER
-    echo "NOTE: You need to log out and log back in for docker group membership to take effect"
-    echo "      Or run: newgrp docker"
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    # Enable and start Docker service
+    sudo systemctl enable docker || true
+    sudo systemctl start docker || true
+
+    echo "Docker CE installed and started successfully."
+else
+    echo "Docker is already installed"
 fi
+
+# Configure Docker group and permissions
+echo "Configuring Docker group and permissions..."
+sudo groupadd docker 2>/dev/null || true
+sudo usermod -aG docker $USER
+if [[ -d "$HOME/.docker" ]]; then
+    sudo chown "$USER":"$USER" "$HOME/.docker" -R
+    sudo chmod g+rwx "$HOME/.docker" -R
+fi
+echo "NOTE: You need to log out and log back in for docker group membership to take effect"
+echo "      Or run: newgrp docker"
 
 # Install pipx
 if ! command -v pipx &> /dev/null; then
